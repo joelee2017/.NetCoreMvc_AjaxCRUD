@@ -1,0 +1,1 @@
+.NetCoreMvc_AjaxCRUD
