@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
+using MvcMovie.Helper;
 using MvcMovie.Models;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,6 +25,17 @@ namespace MvcMovie.Controllers
             IQueryable<string> genreQuery = from m in _context.Movie
                                             orderby m.Genre
                                             select m.Genre;
+            var movieGenreVM = new MovieGenreViewModel
+            {
+                Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
+            };
+
+            return View(movieGenreVM);
+        }
+
+        public async Task<IActionResult> Page(string movieGenre, string searchString)
+        {
+
 
             var movies = from m in _context.Movie
                          select m;
@@ -40,11 +52,10 @@ namespace MvcMovie.Controllers
 
             var movieGenreVM = new MovieGenreViewModel
             {
-                Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
                 Movies = await movies.ToListAsync()
             };
 
-            return View(movieGenreVM);
+            return View("~/Views/Movies/_PagePartialView.cshtml", movieGenreVM);
         }
 
         [HttpPost]
@@ -81,16 +92,24 @@ namespace MvcMovie.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for 
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [ValidateModel]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,ReleaseDate,Genre,Price,Rating")] Movie movie)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(movie);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(movie);
+            //if (ModelState.IsValid)
+            //{
+            //    _context.Add(movie);
+            //    await _context.SaveChangesAsync();
+            //    return RedirectToAction(nameof(Index));
+            //}
+            //return View(movie);
+
+            _context.Add(movie);
+            await _context.SaveChangesAsync();
+
+            Result result = new Result() { IsSuccess = true, Message = "成功" };
+
+            return this.Json(new {result.IsSuccess, result.Message });
         }
 
         // GET: Movies/Edit/5

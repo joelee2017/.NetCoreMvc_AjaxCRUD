@@ -22,6 +22,10 @@ namespace MvcMovie
         {
             services.AddControllersWithViews();
 
+            //return Data ºû«ù¤j¤p¼g
+            services.AddControllers()
+             .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+
             services.AddDbContext<MvcMovieContext>(options 
                 => options.UseSqlServer(Configuration.GetConnectionString("MvcMovieContext")));
 

@@ -3,70 +3,97 @@
 @{
     ViewData["Title"] = "Index";
 }
+<div class="form-inline">
+    <h1>Index</h1>
 
-<h1>Index</h1>
+    @*<p>
+            <a asp-action="Create">Create New</a>
+        </p>*@
+    <button type="button" class="btn btn-success text-white ml-5" onclick="PopUpEvent()">新增</button>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<form asp-controller="Movies" asp-action="Index" method="get">
+<form data-event="search">
     <p>
-
         <select asp-for="MovieGenre" asp-items="Model.Genres">
             <option value="">All</option>
         </select>
 
         Title: <input type="text" asp-for="SearchString" />
-        <input type="submit" value="Filter" />
+        @*<input type="submit" value="Filter" />*@
+        <button class="btn btn-primary" page-select="select" type="button">查詢</button>
+        <button class="btn btn-light" data-clear="clear" type="button">清除</button>
     </p>
 </form>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].ReleaseDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Genre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Rating)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Movies)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Title)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ReleaseDate)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Genre)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Price)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Rating)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div id="page" class=""></div>
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/Common.js"></script>
+    <script>
+    $(document).ready(function () {
+            Select();
+    });
+
+
+    // 頁面使用 url
+    const selectUrl = '@Url.Action("Page", "Movies")'; // 查詢
+    const createUrl = '@Url.Action("Create", "Movies")'; // 新增
+    const editUrl = '@Url.Action("Edit", "Movies")'; // 編輯
+
+    // 清空輸入欄位
+    $('button[data-clear="clear"]').off('click').on('click', function () {
+        $('form[data-event="search"]').find('input').val('');
+        $('form[data-event="search"]').find('select').each(function () { this.selectedIndex = 0; });
+        Select();
+    });
+
+    // 查詢事件
+    $('button[page-select="select"]').off('click').click(function () { Select(); });
+
+
+    // 查詢條件資料繫結
+    function GetParameter(page) {
+        let form = SerializeObject($('form[data-event="search"]'));
+        form.Page = page || 1;// 前往頁碼
+        return form;
+    }
+
+    // 查詢方法
+    function Select(page) {
+        let formData = GetParameter(page);
+        $.ajax({
+            url: selectUrl,
+            data: formData,
+            cache:false,
+            success: function (rep) {
+                $('#page').empty().html(rep);
+                pagination.init("#page", Select); // 分頁功能
+            }
+        });
+    }
+
+     // 編輯開啟彈出視窗
+    function PopUpEvent(parameter) {
+        let actionUrl = parameter != null ? editUrl : createUrl;
+        $.ajax({
+            url: actionUrl,
+            type: 'GET',
+            data: { ID: parameter },
+            cache:false,
+            error: function (xhr) {
+                console.log(xhr);
+                alert('Ajax request 發生錯誤');
+            },
+            success: function (response) {
+                $('.modal-content').html('');
+                $('.modal-content').html(response);
+                $("#PopUpEventModal").modal('show');
+                activityEvent.init(); // 新增 && 編輯，以及資料事件狀況繫結
+                activityEvent.fnSuccess = Select; // 繫結事件 查詢
+            }
+        });
+    }
+    </script>
+}
+
+
