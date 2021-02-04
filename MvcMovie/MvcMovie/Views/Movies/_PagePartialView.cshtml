@@ -1,31 +1,32 @@
-﻿@model MvcMovie.Models.MovieGenreViewModel
+﻿@model MvcMovie.Models.PagedListModel<MovieViewModel>
 @{
     Layout = null;
     ViewData["Title"] = "_PagePartialView";
 }
+<span class="d-flex justify-content-end p-2">資料總筆數：@Model.Total </span>
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Title)
+            <th data-order="Title">
+                @Html.DisplayNameFor(model => model.Items[0].Title)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].ReleaseDate)
+            <th data-order="ReleaseDate">
+                @Html.DisplayNameFor(model => model.Items[0].ReleaseDate)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Genre)
+            <th data-order="Genre">
+                @Html.DisplayNameFor(model => model.Items[0].Genre)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Price)
+            <th data-order="Price">
+                @Html.DisplayNameFor(model => model.Items[0].Price)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Movies[0].Rating)
+            <th data-order="Rating">
+                @Html.DisplayNameFor(model => model.Items[0].Rating)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Movies)
+        @foreach (var item in Model.Items)
         {
             <tr>
                 <td>
@@ -53,3 +54,19 @@
 
     </tbody>
 </table>
+
+@if (Model.Items != null && Model.Items.Any() == true)
+{
+
+    <nav aria-label="Page navigation example">
+        <div class="pagination m-2">
+            @Html.PagedListPager(Model.Items, page => Url.Action("Movies", new { page }))
+        </div>
+    </nav>
+}
+
+<script>
+     // 排序功能
+    ordersByColumn.init("@Model.OrderType"),@Model.Items.PageNumber), Select);
+
+</script>

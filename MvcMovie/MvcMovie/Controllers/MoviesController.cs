@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BackendServices.Common;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
@@ -6,6 +7,7 @@ using MvcMovie.Helper;
 using MvcMovie.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using X.PagedList;
 
 namespace MvcMovie.Controllers
 {
@@ -21,10 +23,13 @@ namespace MvcMovie.Controllers
         // GET: Movies
         public async Task<IActionResult> Index(string movieGenre, string searchString)
         {
+
+
             // Use LINQ to get list of genres.
             IQueryable<string> genreQuery = from m in _context.Movie
                                             orderby m.Genre
                                             select m.Genre;
+
             var movieGenreVM = new MovieGenreViewModel
             {
                 Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
@@ -33,29 +38,38 @@ namespace MvcMovie.Controllers
             return View(movieGenreVM);
         }
 
-        public async Task<IActionResult> Page(string movieGenre, string searchString)
+        public async Task<IActionResult> Page(MovieQuery movieQuery)
         {
-
+            PagedListModel<MovieViewModel> pagedListModel = new PagedListModel<MovieViewModel>();
 
             var movies = from m in _context.Movie
                          select m;
 
-            if (!string.IsNullOrEmpty(searchString))
+
+            if (!string.IsNullOrEmpty(movieQuery.searchString))
             {
-                movies = movies.Where(s => s.Title.Contains(searchString));
+                movies = movies.Where(s => s.Title.Contains(movieQuery.searchString));
             }
 
-            if (!string.IsNullOrEmpty(movieGenre))
+            if (!string.IsNullOrEmpty(movieQuery.movieGenre))
             {
-                movies = movies.Where(x => x.Genre == movieGenre);
+                movies = movies.Where(x => x.Genre == movieQuery.movieGenre);
             }
 
-            var movieGenreVM = new MovieGenreViewModel
+            // 排序
+            if (!string.IsNullOrWhiteSpace(movieQuery.OrderType) && !string.IsNullOrWhiteSpace(movieQuery.OrderName))
             {
-                Movies = await movies.ToListAsync()
-            };
+                IQueryable<Movie> orderByResult =
+                    movieQuery.OrderType.ToLower() == "desc" ?
+                    movies.ColumnOrderByDescending(movieQuery.OrderName) : movies.ColumnOrdersBy(movieQuery.OrderName);
+            }
 
-            return View("~/Views/Movies/_PagePartialView.cshtml", movieGenreVM);
+            pagedListModel.Items = 
+                movies.ModelListConvert<MovieViewModel>().ToPagedList(movieQuery.Page < 1 ? 1 : movieQuery.Page, movieQuery.PageSize);
+
+            pagedListModel.Total = movies.Count(); // 查詢資料總數
+
+            return View("~/Views/Movies/_PagePartialView.cshtml", pagedListModel);
         }
 
         [HttpPost]
@@ -109,7 +123,7 @@ namespace MvcMovie.Controllers
 
             Result result = new Result() { IsSuccess = true, Message = "成功" };
 
-            return this.Json(new {result.IsSuccess, result.Message });
+            return this.Json(new { result.IsSuccess, result.Message });
         }
 
         // GET: Movies/Edit/5
