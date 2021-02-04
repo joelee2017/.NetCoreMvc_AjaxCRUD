@@ -62,12 +62,21 @@ namespace MvcMovie.Controllers
                 IQueryable<Movie> orderByResult =
                     movieQuery.OrderType.ToLower() == "desc" ?
                     movies.ColumnOrderByDescending(movieQuery.OrderName) : movies.ColumnOrdersBy(movieQuery.OrderName);
+
+                pagedListModel.Total = orderByResult.Count(); // 查詢資料總數
+                pagedListModel.Items = orderByResult.ModelListConvert<MovieViewModel>()
+                .ToPagedList(movieQuery.Page < 1 ? 1 : movieQuery.Page, movieQuery.PageSize);
             }
+            else
+            {
+                pagedListModel.Total = movies.Count(); // 查詢資料總數
+                pagedListModel.Items = movies.ModelListConvert<MovieViewModel>()
+                    .ToPagedList(movieQuery.Page < 1 ? 1 : movieQuery.Page, movieQuery.PageSize);
+            }
+            
 
-            pagedListModel.Items = 
-                movies.ModelListConvert<MovieViewModel>().ToPagedList(movieQuery.Page < 1 ? 1 : movieQuery.Page, movieQuery.PageSize);
-
-            pagedListModel.Total = movies.Count(); // 查詢資料總數
+            // 重新指定排序順序
+            pagedListModel.OrderType = movieQuery.OrderType == "Asc" ? "Asc" : "Desc";
 
             return View("~/Views/Movies/_PagePartialView.cshtml", pagedListModel);
         }

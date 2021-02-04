@@ -27,7 +27,8 @@
 
 <div id="page" class=""></div>
 @section scripts{
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @*資料驗證*@
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");} 
     <script src="~/js/Common.js"></script>
     <script>
     $(document).ready(function () {
@@ -54,13 +55,20 @@
     // 查詢條件資料繫結
     function GetParameter(page) {
         let form = SerializeObject($('form[data-event="search"]'));
+        form.SortName = '';
         form.Page = page || 1;// 前往頁碼
         return form;
     }
 
     // 查詢方法
-    function Select(page) {
+    function Select(page, sort) {
         let formData = GetParameter(page);
+
+        if (sort != null) {
+            formData.OrderType = sort.OrderType || null;
+            formData.orderName = sort.OrderName || null;
+        }
+
         $.ajax({
             url: selectUrl,
             data: formData,

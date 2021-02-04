@@ -231,7 +231,7 @@ let ordersByColumn = (function () {
 
         // 點擊後事件
         $('th[data-order]').off('click').on('click', function () {
-
+            console.log(this.dataset.order);
             let _Asc = 'Asc';
             let _Desc = 'Desc';
             let orderName = this.dataset.order; // 排序屬性
